@@ -1,0 +1,34 @@
+# Define some devices that Honey will use to 
+# monitor the world, specifically the door,
+# window, and motion sensors, video cameras, 
+# etc.
+radio_1: &radio_1
+  name: radio_1
+  type: rtl-sdr
+  index: 0
+
+# Camera configurations are still TBD
+cam_1: &cam_1
+  name: "Front Porch Cam"
+  type: ip
+  address: "192.168.1.100"
+  make: "Chinese Special"
+  model: "Kung pao cat cam version 1"
+
+# Tell Honey about what kinds of sensors are present
+honeywell: &honeywell
+  type: honeywell_345 # Honeywell 345MHz wireless sensors
+  source: *radio_1
+  zones: 
+    - id: 49183
+      name: Deck Door
+      type: reed # reed sensors detect open/close and use very 
+                 # little power
+      perimeter: true # this is on the perimeter of the home
+
+# Define systems, each is treated independently
+# from the others
+systems:
+  - name: home
+    sensors:
+      - *honeywell

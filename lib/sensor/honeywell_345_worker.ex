@@ -1,0 +1,37 @@
+defmodule Sensor.Honeywell345.Worker do
+  @moduledoc """
+  The Honeywell 345 sensor uses the rtl 433 project as a subprocess to
+  capture wireless sensor messages.
+  """
+
+  import ShorterMaps
+  use GenServer
+  use LoggerUtils
+
+  ##############################
+  # API
+  ##############################
+  def start_link({system_name, sensor}), do: GenServer.start_link(__MODULE__, {system_name, sensor})
+
+  defmodule State do
+    @moduledoc false
+    defstruct [
+      system_name: nil, # system name
+      sensor: nil, # sensor
+    ]
+  end
+
+  ##############################
+  # GenServer Callbacks
+  ##############################
+
+  @impl GenServer
+  def init({system_name, sensor}) do
+    LoggerUtils.info("Starting #{inspect(~M{system_name, sensor}, pretty: true)}")
+    {:ok, ~M{%State system_name, sensor}}
+  end
+
+  ##############################
+  # Internal Calls
+  ##############################
+end
