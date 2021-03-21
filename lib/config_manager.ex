@@ -11,6 +11,8 @@ defmodule Config.Manager do
   # API
   ##############################
 
+  @known_radio_types ~w(rtl-sdr)
+
   def start_link(:ok) , do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
   @doc """
@@ -31,7 +33,7 @@ defmodule Config.Manager do
   ## Params
   - name: String The radio name, can be nil if unknown
   - type: String The radio type
-  - index: Integer The index of this radio if there are multiples of the same type available
+  - index: Integer The index of this radio if multiples of the same type are possible
   ## Return
   - :ok All is well, the radio was defined or updated
   - {:error, reason} Failed for some reason
@@ -41,9 +43,9 @@ defmodule Config.Manager do
   defmodule Radio do
     @moduledoc "How a radio is defined"
     defstruct [
-      name: nil,
-      type: nil,
-      index: nil,
+      name: nil, # pretty name for the radio
+      type: nil, # type, must be in @known_radio_types
+      index: nil, # radio index to differentiata multiples of same type
     ]
   end
 
@@ -63,7 +65,8 @@ defmodule Config.Manager do
   def init(:ok) do
     LoggerUtils.info("Starting")
 
-    cfg = read_example_config()
+    # cfg = read_example_config()
+    cfg = nil
     LoggerUtils.debug("cfg => #{inspect(cfg, pretty: true, limit: :infinity)}")
 
     {:ok, parse_config(~M{%State cfg})}
@@ -121,7 +124,7 @@ defmodule Config.Manager do
     end
   end
 
-  def do_define_radio(~M{radios} = state, name, type, index) when is_number(index) and type in ["rtl-sdr"] do
+  def do_define_radio(~M{radios} = state, name, type, index) when is_number(index) and type in @known_radio_types do
     key = {type, index}
     radio = Map.get(radios, key, ~M{%Radio name: nil})
     case {radio.name, name} do

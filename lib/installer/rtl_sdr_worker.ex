@@ -33,7 +33,7 @@ defmodule Installer.RtlSdr.Worker do
   ##############################
 
   def do_detect(state) do
-    case System.cmd("lsusb", ["-d", "OBDA:2838"]) do
+    case System.cmd("lsusb", ["-d", "0BDA:2838"]) do
       {result, 0} ->
         # result is a string with 1 line per RTL-SDR
         _ =

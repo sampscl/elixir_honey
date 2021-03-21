@@ -49,6 +49,7 @@ defmodule ElixirHoney.MixProject do
       {:yaml_elixir, "~> 2.5"},
       {:absinthe_plug, "~> 1.5"},
       {:flub, "~> 1.1"},
+      {:line_buffer, "~> 0.1"},
     ]
   end
 end
