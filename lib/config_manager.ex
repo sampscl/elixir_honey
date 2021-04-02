@@ -40,6 +40,14 @@ defmodule Config.Manager do
   """
   def define_radio(name, type, index), do: GenServer.call(__MODULE__, {:define_radio, name, type, index})
 
+  @doc """
+  Get a list of all radios
+  ## Returns
+  - {:ok, [Radio.t]} All is well
+  - {:error, reason} Failed for some reason
+  """
+  def get_radios, do: GenServer.call(__MODULE__, :get_radios)
+
   defmodule Radio do
     @moduledoc "How a radio is defined"
     defstruct [
@@ -87,6 +95,12 @@ defmodule Config.Manager do
   def handle_call({:define_radio, name, type, index}, _from, state) do
     {new_state, response} = do_define_radio(state, name, type, index)
     {:reply, response, new_state}
+  end
+
+  @impl GenServer
+  def handle_call(:get_radios, _from, ~M{radios} = state) do
+    result = Map.values(radios)
+    {:reply, {:ok, result}, state}
   end
 
   ##############################
