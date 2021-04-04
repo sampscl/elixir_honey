@@ -62,6 +62,10 @@ defmodule Web.Schema do
       resolve &Web.Resolver.systems/2
     end
 
+    field :is_installer_mode, :boolean do
+      resolve &Web.Resolver.is_installer_mode/2
+    end
+
   end
 
 end

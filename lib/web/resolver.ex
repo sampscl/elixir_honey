@@ -53,4 +53,8 @@ defmodule Web.Resolver do
 
     {:ok, zones}
   end
+
+  def is_installer_mode(_args, _resolution) do
+    {:ok, Installer.Sup.is_installer_mode()}
+  end
 end

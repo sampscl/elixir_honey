@@ -10,12 +10,12 @@ defmodule Installer.Sup do
   @impl Supervisor
   def init(:ok) do
     LoggerUtils.info("Starting")
-    children = case Config.Manager.get_systems() do
-      {:ok, _systems} ->
+    children = case is_installer_mode() do
+      false ->
         LoggerUtils.info("Systems are configured, not entering installer mode")
         []
 
-      {:error, _reason} ->
+      true ->
         # No systems, lets get to configuring some
         LoggerUtils.info("No systems are configured, entering installer mode")
         [
@@ -24,5 +24,18 @@ defmodule Installer.Sup do
         ]
     end
     Supervisor.init(children, strategy: :one_for_one)
+  end
+
+  @doc """
+  Check if installer mode
+  ## Returns
+  - true
+  - false
+  """
+  def is_installer_mode do
+    case Config.Manager.get_systems() do
+      {:ok, _systems} -> false
+      {:error, _reason} -> true
+    end
   end
 end
