@@ -1,8 +1,11 @@
-import { useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 
 import { ApolloProvider, ApolloClient, InMemoryCache } from '@apollo/client';
 import { useQuery, gql } from '@apollo/client';
+
+// const WS_URL = `ws://${window.location.hostname}:${window.location.port}/ws`
+const WS_URL = `ws://localhost:8080/ws`
 
 const client = new ApolloClient({
   uri: window.location.origin + "/api",
@@ -14,18 +17,27 @@ const IS_INSTALLER_MODE = gql`
   isInstallerMode
 }`;
 
-function IsInstallerMode() {
-  const { loading, error, data} = useQuery(IS_INSTALLER_MODE)
-  if(loading) { return <p>Loading...</p> }
-  if(error) { return <p>Error :-(</p> }
-  return <p>Installer Mode: {data.isInstallerMode ? "True" : "False"}</p>
+type HeaderProps = {
+  installerMode: boolean
+}
+
+function AppHeader({installerMode}: HeaderProps) {
+  return installerMode? 
+    <header className="App-header" style={{backgroundColor: "red"}} ><p>Installer Mode</p></header> :
+    <header className="App-header"></header>
 }
 
 function App() {
 
+  const { loading, error, data } = useQuery(IS_INSTALLER_MODE, {client: client})
+  const [installerMode, setInstallerMode] = useState<boolean>(!loading && !error && data.isInstallerMode)
+  useEffect(() => {
+    setInstallerMode(!loading && !error && data.isInstallerMode)
+  }, [loading, error, data])
+
   const ws = useRef<WebSocket | null>(null)
   useEffect(() => {
-    ws.current = new WebSocket(`ws://${window.location.hostname}:${window.location.port}/ws`)
+    ws.current = new WebSocket(WS_URL)
     ws.current.onmessage = (msg) => {
       console.log(msg)
     }
@@ -34,13 +46,9 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
-      </header>
-      <body>
-        <ApolloProvider client={client}>
-          <IsInstallerMode />
-        </ApolloProvider>
-      </body>
+      <ApolloProvider client={client}>
+          <AppHeader installerMode={installerMode} />
+      </ApolloProvider>
     </div>
   );
 }
