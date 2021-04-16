@@ -32,17 +32,14 @@ function App() {
   const installerMode = useQuery(IS_INSTALLER_MODE, {client: client})
   const ws = useRef<WebSocket | null>(null)
   const [devices] = useState<Array<Device>>([{name: "name", type: "rtl-sdr", index: 0, address: "", make: "", model: ""}])
-  const device_ui: Array<JSX.Element> = []
-  devices.forEach(device => {
-    device_ui.push(<DeviceComp device={device} />)
-  });
+  const device_ui: Array<JSX.Element> = devices.map((device: Device): JSX.Element => { return <DeviceComp device={device} /> })
 
   useEffect(() => {
     ws.current = new WebSocket(WS_URL)
     ws.current.onmessage = (msg: MessageEvent<any>) => {
       console.log(msg)
       const o = JSON.parse(msg.data)
-      switch(o["type"]) {  
+      switch(o["type"]) {
         default: 
         console.log(`ws_onmessage: unhandled => ${msg.data}`)
         break;
