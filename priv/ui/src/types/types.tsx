@@ -1,7 +1,12 @@
-export interface Device {
-  name: string
+export interface Radio {
   type: string
+  name: string
   index: number
+}
+
+export interface Camera {
+  type: string
+  name: string
   address: string
   make: string
   model: string
@@ -15,7 +20,7 @@ export interface Zone {
 
 export interface Sensor {
   interface: string
-  source: Device
+  source: Radio | Camera
   zones: Zone
 }
 

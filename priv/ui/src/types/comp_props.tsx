@@ -1,14 +1,23 @@
 import { QueryResult, OperationVariables } from '@apollo/client';
-import { System, Device } from './types'
+import { System, Radio, Camera } from './types'
+import WebsocketDispatcher from '../websocket_dispatcher'
 
 export interface HeaderProps {
   installerMode: QueryResult<any, OperationVariables>
 }
 
-export interface DeviceProps {
-  device: Device
+export interface WebsocketClientProps {
+  dispatcher: WebsocketDispatcher | null
 }
 
 export interface SystemProps {
   system: System
+}
+
+export interface RadioProps extends WebsocketClientProps {
+  radio: Radio
+}
+
+export interface CameraProps extends WebsocketClientProps {
+  camera: Camera
 }

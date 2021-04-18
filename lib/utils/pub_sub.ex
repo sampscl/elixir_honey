@@ -12,4 +12,7 @@ defmodule PubSub do
   # and id is an identifier for the zone
   define_channel("zone_discovery", radio: nil, id: 0)
 
+  # Radio discovered by install mode, radio is a Config.Manager.Radio.t
+  define_channel("radio_discovery", radio: nil)
+
 end

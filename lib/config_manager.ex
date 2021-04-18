@@ -152,7 +152,9 @@ defmodule Config.Manager do
 
       {_, new_name} ->
         # update name
-        {~M{state| radios: Map.put(radios, key, ~M/radio| name: new_name, type, index/)}, :ok}
+        radio_to_store = ~M/radio| name: new_name, type, index/
+        PubSub.pub_radio_discovery(~M{%PubSub.RadioDiscovery radio: radio_to_store})
+        {~M{state| radios: Map.put(radios, key, radio_to_store)}, :ok}
     end
   end
   def do_define_radio(state, _name, _type, _index), do: {state, {:error, "invalid index or type"}}
