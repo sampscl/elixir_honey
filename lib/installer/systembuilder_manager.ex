@@ -22,6 +22,8 @@ defmodule Installer.SystemBuilder.Manager do
   """
   def get_zones, do: GenServer.call(__MODULE__, :get_zones)
 
+  def remove_zone(id), do: GenServer.call(__MODULE__, {:remove_zone, id})
+
   defmodule State do
     @moduledoc false
     defstruct [
@@ -46,6 +48,12 @@ defmodule Installer.SystemBuilder.Manager do
   end
 
   @impl GenServer
+  def handle_call({:remove_zone, id}, _from, state) do
+    {updated_state, result} = do_remove_zone(state, id)
+    {:reply, result, updated_state}
+  end
+
+  @impl GenServer
   def handle_info(~M{channel: @zone_discovery_chnl, data, _node}, state) do
     {:noreply, do_zone_discovery(state, data)}
   end
@@ -56,5 +64,9 @@ defmodule Installer.SystemBuilder.Manager do
 
   def do_zone_discovery(~M{zones} = state, ~M{%PubSub.ZoneDiscovery id}) do
     ~M{state| zones: MapSet.put(zones, id)}
+  end
+
+  def do_remove_zone(~M{zones} = state, id) do
+    {~M{state| zones: MapSet.delete(zones, id)}, :ok}
   end
 end
