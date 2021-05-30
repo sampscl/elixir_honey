@@ -118,7 +118,7 @@ defmodule Installer.Honeywell345.Worker do
 
     LoggerUtils.info("zone discovery: #{inspect(~M{id, radio}, pretty: true)}")
 
-    PubSub.pub_zone_discovery(radio: radio, id: id)
+    PubSub.pub_zone_discovery(~M{%PubSub.ZoneDiscovery radio, id})
 
     process_lines(state, rest)
   end

@@ -19,6 +19,7 @@ defmodule Installer.Sup do
         # No systems, lets get to configuring some
         LoggerUtils.info("No systems are configured, entering installer mode")
         [
+          {Installer.SystemBuilder.Manager, :ok},
           {Installer.RtlSdr.Worker, :ok},
           {Installer.Honeywell345.Worker, :ok},
         ]

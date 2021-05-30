@@ -57,7 +57,13 @@ defmodule Utils.PubSubHelpers do
       end
 
       def unquote(pub_chnl)(arg) do
-        Flub.pub(arg, unquote(get_chnl)())
+        case arg do
+          # already a struct, pub it
+          %unquote(struct_mod){} -> Flub.pub(arg, unquote(get_chnl)())
+
+          # probably a kwl, convert to struct first then pub
+          _ -> Kernel.struct!(unquote(struct_mod), arg) |> Flub.pub(unquote(get_chnl)())
+        end
       end
 
       def unquote(sub_chnl)(opts) do
