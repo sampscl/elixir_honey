@@ -22,6 +22,25 @@ defmodule Installer.SystemBuilder.Manager do
   """
   def get_zones, do: GenServer.call(__MODULE__, :get_zones)
 
+  @doc """
+  Update the system named `system_name` in `Config.Manager` by adding
+  all the zones held here to the configuration. If the system already
+  exists in the config manager, then the zones are added to it. Otherwise
+  an empty system is created first.
+  ## Parameters
+  - `system_name` String name of the system to create / expand
+  ## Returns
+  - `:ok` All is well
+  """
+  def update_configuration(system_name), do: GenServer.call(__MODULE__, {:update_configuration, system_name})
+
+  @doc """
+  Remove a zone by id
+  ## Parameters
+  - id: Integer zone to remove
+  ## Returns
+  - :ok
+  """
   def remove_zone(id), do: GenServer.call(__MODULE__, {:remove_zone, id})
 
   defmodule State do
@@ -54,6 +73,12 @@ defmodule Installer.SystemBuilder.Manager do
   end
 
   @impl GenServer
+  def handle_call({:update_configuration, system_name}, _from, state) do
+    {updated_state, result} = do_update_configuration(state, system_name)
+    {:reply, result, updated_state}
+  end
+
+  @impl GenServer
   def handle_info(~M{channel: @zone_discovery_chnl, data, _node}, state) do
     {:noreply, do_zone_discovery(state, data)}
   end
@@ -68,5 +93,11 @@ defmodule Installer.SystemBuilder.Manager do
 
   def do_remove_zone(~M{zones} = state, id) do
     {~M{state| zones: MapSet.delete(zones, id)}, :ok}
+  end
+
+  def do_update_configuration(state, system_name) do
+    # TODO: implement do_update_configuration/2
+    LoggerUtils.info("Updating configuration for #{system_name}")
+    {state, :ok}
   end
 end

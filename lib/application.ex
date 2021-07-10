@@ -8,6 +8,7 @@ defmodule ElixirHoney.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      # pg_spec(), # flub also starts this
       {Config.Manager, :ok},
       {Sensor.Sup, :ok},
       {Installer.Sup, :ok},
@@ -18,5 +19,12 @@ defmodule ElixirHoney.Application do
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: __MODULE__]
     Supervisor.start_link(children, opts)
+  end
+
+  defp pg_spec do
+    %{
+      id: :pg,
+      start: {:pg, :start_link, []}
+    }
   end
 end

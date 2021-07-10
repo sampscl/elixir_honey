@@ -4,7 +4,6 @@ defmodule Config.Manager do
   """
   use GenServer
   use LoggerUtils
-  use PatternTap
   import ShorterMaps
 
   ##############################

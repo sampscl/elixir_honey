@@ -39,17 +39,16 @@ defmodule ElixirHoney.MixProject do
       {:logger_file_backend, "~>0.0.11"},
       {:executus, "~>0.6"},
       {:shorter_maps, "~>2.2"},
-      {:pg2_wrap, "~> 1.0"},
       {:cowboy, "~> 2.6"},
       {:plug, "~> 1.4"},
       {:plug_cowboy, "~> 2.0"},
       {:hexate, "~> 0.6"},
       {:timex, "~> 3.6"},
-      {:pattern_tap, "~> 0.4"},
       {:yaml_elixir, "~> 2.5"},
       {:absinthe_plug, "~> 1.5"},
-      {:flub, "~> 1.1"},
-      {:line_buffer, "~> 0.1"},
+      # {:flub, "~> 1.1"},
+      {:flub, git: "https://github.com/sampscl/flub.git", branch: "master"},
+      {:line_buffer, "~> 1.0"},
     ]
   end
 end

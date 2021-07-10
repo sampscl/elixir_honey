@@ -1,10 +1,11 @@
 import Config
 das_app = :elixir_honey
+console_log_format = "$time [$level] $levelpad$message\n"
 
 # Logger configuration
 config :logger,
 console: [level: :debug,
-          format: Application.fetch_env!(das_app, :console_log_format)],
+          format: console_log_format],
 handle_sasl_reports: false,
 handle_otp_reports: true
 
