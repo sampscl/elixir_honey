@@ -21,10 +21,10 @@ defmodule ElixirHoney.Application do
     Supervisor.start_link(children, opts)
   end
 
-  defp pg_spec do
-    %{
-      id: :pg,
-      start: {:pg, :start_link, []}
-    }
-  end
+  # defp pg_spec do
+  #   %{
+  #     id: :pg,
+  #     start: {:pg, :start_link, []}
+  #   }
+  # end
 end

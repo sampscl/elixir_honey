@@ -72,7 +72,7 @@ defmodule Installer.Honeywell345.Worker do
   @impl GenServer
   def handle_info({dead_pid, :result, result}, ~M{pid} = state) do
     LoggerUtils.info("Pid #{inspect(dead_pid)} exited: #{inspect(result, pretty: true)}")
-    if(dead_pid == pid) do
+    if dead_pid == pid do
       # pid we're tracking pid died, nil it out
       {:noreply, ~M{state| pid: nil}}
     else

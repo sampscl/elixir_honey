@@ -10,7 +10,7 @@ defmodule Installer.Sup do
   @impl Supervisor
   def init(:ok) do
     LoggerUtils.info("Starting")
-    children = case is_installer_mode() do
+    children = case installer_mode?() do
       false ->
         LoggerUtils.info("Systems are configured, not entering installer mode")
         []
@@ -33,7 +33,7 @@ defmodule Installer.Sup do
   - true
   - false
   """
-  def is_installer_mode do
+  def installer_mode? do
     case Config.Manager.get_systems() do
       {:ok, _systems} -> false
       {:error, _reason} -> true
