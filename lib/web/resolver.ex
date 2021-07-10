@@ -36,6 +36,14 @@ defmodule Web.Resolver do
   end
   def systems(_args, resolution), do: systems(%{name: nil}, resolution)
 
+  @doc """
+  Resolver for sensors
+  ## Parameters
+  - system map() The system to get sensors for, returned from `systems/2`
+  ## Returns
+  - {:ok, [sensor]} All is well, a list of sensors is returned, see config.yml for shape
+  - {:error, reason} Failed for reason
+  """
   def sensors(system, _args, _resolution) do
     sensors =
       system # already atom keyed since systems/2 does that for us
@@ -45,6 +53,14 @@ defmodule Web.Resolver do
     {:ok, sensors}
   end
 
+  @doc """
+  Resolver for zones
+  ## Parameters
+  - sensor map() The sensor to get zones for, returned from `sensors/3`
+  ## Returns
+  - {:ok, [zone]} All is well, a list of zones is returned, see config.yml for shape
+  - {:error, reason} Failed for reason
+  """
   def zones(sensor, _args, _resolution) do
     zones =
       sensor
@@ -54,6 +70,12 @@ defmodule Web.Resolver do
     {:ok, zones}
   end
 
+  @doc """
+  Resolver for installer mode
+  ## Returns
+  - {:ok, boolean} All is well, a boolean value is returned indicating whether the
+  app is in installer mode or not
+  """
   def installer_mode?(_args, _resolution) do
     {:ok, Installer.Sup.installer_mode?()}
   end
