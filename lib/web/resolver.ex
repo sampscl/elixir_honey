@@ -10,7 +10,7 @@ defmodule Web.Resolver do
   @doc """
   Resolver for systems
   ## Parameters
-  - _args: Map, keyed with the query's argument names
+  - args: Map, keyed with the query's argument names
   - resolution: %Absinthe.Resolution{} containing context and stuff
 
   ## Returns
@@ -35,6 +35,27 @@ defmodule Web.Resolver do
     end
   end
   def systems(_args, resolution), do: systems(%{name: nil}, resolution)
+
+  @spec discovered_zones(map(), %Absinthe.Resolution{}) :: {:ok, list(String.t)}
+  @doc """
+  Resolver for discovered zones (discovered because installer mode is true)
+  ## Parameters
+  - _args: Map, keyed with the query's argument names (not used)
+  - _resolution: %Absinthe.Resolution{} containing context and stuff
+
+  ## Returns
+  - {:ok, [zone_id]} All is well, a list of zone ids is returned
+  - {:error, reason} Failed for reason
+  """
+  def discovered_zones(_args, _resolution) do
+    if Installer.Sup.installer_mode?() do
+      # Installer mode, check system builder for zones
+      {:ok, Installer.SystemBuilder.Manager.get_zones() |> then(fn({:ok, zone_map_set}) -> zone_map_set end)}
+    else
+      # Not installer mode, no discovered zones
+      {:ok, []}
+    end
+  end
 
   @doc """
   Resolver for sensors

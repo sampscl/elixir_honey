@@ -15,7 +15,9 @@ defmodule Installer.SystemBuilder.Manager do
   def start_link(:ok), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
   @doc """
-  Get all zones as a MapSet
+  Get all zones as a MapSet. The zones can be re-discovered dynamically and so
+  after update_configuration/1 is called to add the current zones to a system,
+  those same zones will eventually be re-discovered.
 
   ## Returns
   - MapSet.t of all discovered zone ids
