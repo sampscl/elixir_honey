@@ -34,9 +34,7 @@ defmodule Installer.Sup do
   - false
   """
   def installer_mode? do
-    case Config.Manager.get_systems() do
-      {:ok, _systems} -> false
-      {:error, _reason} -> true
-    end
+    {:ok, systems} = Config.Manager.get_systems()
+    systems == %{}
   end
 end

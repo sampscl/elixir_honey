@@ -71,14 +71,14 @@ defmodule LoggerUtils do
     end
   end
 
-  defmacro inspect(item, level, lambda) do
+  defmacro inspect(item, level \\ :debug) do
     quote do
       real_item = unquote(item)
       {f, a} = __ENV__.function
       l = __ENV__.line
       file = __ENV__.file
       path = "./#{Path.relative_to_cwd(file)}" |> String.replace(~r/.+?\/apps\//, "", global: false)
-      log_string = "#{node()} #{path}:#{l} in #{f}/#{a}: " <> unquote(lambda).(unquote(item))
+      log_string = "#{node()} #{path}:#{l} in #{f}/#{a}: " <> inspect(unquote(item), pretty: true, limit: :infinity)
       case unquote(level) do
         :debug -> Logger.debug(log_string)
         :info -> Logger.info(log_string)

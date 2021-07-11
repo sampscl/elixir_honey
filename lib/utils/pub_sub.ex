@@ -15,4 +15,10 @@ defmodule PubSub do
   # Radio discovered by install mode, radio is a Config.Manager.Radio.t
   define_channel("radio_discovery", radio: nil)
 
+  # A system has been configured, system is a %Config.Manager.System{}
+  define_channel("system_configured", system: nil)
+
+  # A system has been deleted, system_name is a string name of the system
+  define_channel("system_deleted", system_name: nil)
+
 end

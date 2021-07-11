@@ -20,9 +20,9 @@ defmodule Sensor.Sup do
   def configured_children do
     case Config.Manager.get_systems() do
       {:ok, systems} ->
-        Enum.reduce(systems, [], fn(~m{name, sensors} = _system, child_list) ->
-          Enum.reduce(sensors, child_list, fn(sensor, sensor_child_list) ->
-            [sensor_child_spec(name, sensor)| sensor_child_list]
+        Enum.reduce(systems, [], fn({name, system} = _system_item, child_list) ->
+          Enum.reduce(system.sensors, nil, fn(sensor, _) ->
+            [sensor_child_spec(name, sensor)| child_list]
           end)
         end)
 
@@ -32,7 +32,7 @@ defmodule Sensor.Sup do
     end
   end
 
-  def sensor_child_spec(system_name, ~m{type} = sensor) do
+  def sensor_child_spec(system_name, ~M{type} = sensor) do
     case type do
       "honeywell_345" -> {Sensor.Honeywell345.Worker, {system_name, sensor}}
     end

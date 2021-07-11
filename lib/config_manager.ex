@@ -11,18 +11,14 @@ defmodule Config.Manager do
   ##############################
 
   @known_radio_types ~w(rtl-sdr)
+  #@known_sensor_types ~w(honeywell_345)
 
   def start_link(:ok) , do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
   @doc """
-  Reload the config
-  """
-  def reload, do: GenServer.call(__MODULE__, :reload)
-
-  @doc """
-  Get the list of configured systems
+  Get a name-keyed map of configured systems
   ## Returns
-  - {:ok, systems} where systems is a list of (string keyed) systems from the config file
+  - {:ok, %{}} All is well, k: string name, v: %System.t
   - {:error, reason} Failed for reason
   """
   def get_systems, do: GenServer.call(__MODULE__, :get_systems)
@@ -54,12 +50,43 @@ defmodule Config.Manager do
       type: nil, # type, must be in @known_radio_types
       index: nil, # radio index to differentiata multiples of same type
     ]
+    @type t :: %__MODULE__{}
+  end
+
+  defmodule Zone do
+    @moduledoc "How a zone is defined"
+    defstruct [
+      id: 0, # zone id
+      name: "", # human friendly name
+      type: "", # the type of this zone ~w(reed)
+      perimeter: false, # whether zone is on the secure perimeter
+    ]
+    @type t :: %__MODULE__{}
+  end
+
+  defmodule Sensor do
+    @moduledoc "How a sensor is defined"
+    defstruct [
+      type: "", # sensor type
+      source: %Radio{}, # the radio that will receive reports from this sensor
+      zones: [], # %Zone{}
+    ]
+    @type t :: %__MODULE__{}
+  end
+
+  defmodule System do
+    @moduledoc "How a system is defined"
+    defstruct [
+      name: "", # THe system name; unique
+      sensors: [], # sensors in the system; each sensor belongs to 1 system
+    ]
+    @type t :: %__MODULE__{}
   end
 
   defmodule State do
     @moduledoc false
     defstruct [
-      cfg: nil, # The configuration as loaded or overridden
+      systems: %{}, # k: system name string, v: Systen.t
       radios: %{}, # k: {type, index}, v: %Radio{}
     ]
   end
@@ -72,22 +99,29 @@ defmodule Config.Manager do
   def init(:ok) do
     LoggerUtils.info("Starting")
 
-    # cfg = read_example_config()
-    cfg = nil
-    LoggerUtils.debug("cfg => #{inspect(cfg, pretty: true, limit: :infinity)}")
+    state = update_state_from_cfg(%State{}, read_example_config())
 
-    {:ok, parse_config(~M{%State cfg})}
-  end
+    LoggerUtils.debug(inspect(~M{state}, pretty: true))
 
-  @impl GenServer
-  def handle_call(:reload, _from, state) do
-    {:reply, :ok, ~M{state| cfg: read_example_config()}}
+    state
+    |> Map.get(:systems)
+    |> Enum.reduce([], fn({_name, system}, radio_list) -> 
+      PubSub.pub_system_configured(~M{%PubSub.SystemConfigured system})
+      Enum.reduce(system.sensors, nil, fn(sensor, _) -> 
+        [sensor.source| radio_list] 
+      end)
+    end)
+    |> Enum.uniq()
+    |> Enum.each(fn(radio) -> 
+      PubSub.pub_radio_discovery(~M{%PubSub.RadioDiscovery radio})
+    end)
+
+    {:ok, state}
   end
 
   @impl GenServer
   def handle_call(:get_systems, _from, state) do
-    {new_state, response} = do_get_systems(state)
-    {:reply, response, new_state}
+    {:reply, {:ok, state.systems}, state}
   end
 
   @impl GenServer
@@ -123,20 +157,6 @@ defmodule Config.Manager do
     end
   end
 
-  def do_get_systems(~M{cfg: nil} = state), do: {state, {:error, "no config"}}
-  def do_get_systems(~M{cfg} = state) do
-    case get_in(cfg, ["systems"]) do
-      nil ->
-        {state, {:ok, []}}
-
-      systems when is_list(systems) ->
-        {state, {:ok, systems}}
-
-      _ ->
-        {state, {:error, "malformed systems configuration"}}
-    end
-  end
-
   def do_define_radio(~M{radios} = state, name, type, index) when is_number(index) and type in @known_radio_types do
     key = {type, index}
     radio = Map.get(radios, key, ~M{%Radio name: nil})
@@ -158,21 +178,28 @@ defmodule Config.Manager do
   end
   def do_define_radio(state, _name, _type, _index), do: {state, {:error, "invalid index or type"}}
 
-  def parse_config(~M{cfg: nil} = state), do: state
-  def parse_config(~M{cfg} = state) do
-
+  def update_state_from_cfg(state, cfg) do
     # cfg is string-keyed from the original yaml
     cfg
     |> Map.get("systems")
-    |> Enum.reduce(state, fn(system, systems_state) ->
-      system
-      |> Map.get("sensors")
-      |> Enum.reduce(systems_state, fn(sensor, sensors_state) ->
-        ~m{name, type, index} = _radio = sensor["source"]
-        {updated_sensors_state, _} = do_define_radio(sensors_state, name, type, index)
-        updated_sensors_state
-      end)
+    |> Enum.reduce(state, fn(system, current_state) ->
+      name = Map.get(system, "name")
+      sensors =
+        system
+        |> Map.get("sensors")
+        |> Enum.reduce([], fn(~m{type, source} = sensor, sensor_list) ->
+          zones =
+            sensor
+            |> Map.get("zones")
+            |> Enum.reduce([], fn(~m{id, name, type, perimeter} = _zone, zone_list) ->
+              [~M{%Zone id, name, type, perimeter}| zone_list]
+            end)
+          radio = ~M{%Radio name: source["name"], type: source["type"],  index: source["index"]}
+          [~M{%Sensor type, source: radio, zones} |sensor_list]
+        end)
+      system = ~M{%System name, sensors}
+      ~M{current_state| systems: Map.put(current_state.systems, name, system)}
     end)
-
   end
 end
+
