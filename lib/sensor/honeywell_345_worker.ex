@@ -28,6 +28,8 @@ defmodule Sensor.Honeywell345.Worker do
   @impl GenServer
   def init({system_name, sensor}) do
     LoggerUtils.info("Starting #{inspect(~M{system_name, sensor}, pretty: true)}")
+    # command line "rtl_433 -f 344940000 -F json -R 70"
+    # The "-R 70" can *vary* from version to version of the rtl_433 program!
     {:ok, ~M{%State system_name, sensor}}
   end
 

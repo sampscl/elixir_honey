@@ -32,7 +32,8 @@ defmodule Web.Sup  do
         port: api_port,
         otp_app: :elixir_honey,
         dispatch: dispatch(),
-      ]}
+      ]},
+      {Web.Websocket.Worker, :ok},
     ]
   end
 end

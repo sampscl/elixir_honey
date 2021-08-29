@@ -14,7 +14,7 @@ defmodule Web.Handlers.Websocket do
     # LoggerUtils.debug("#{inspect(~M/type, body/, pretty: true)}")
 
     pkg = ~M{type, body}
-    for pid <- Pg2.get_members(__MODULE__), do: send(pid, {:to_client, pkg})
+    for pid <- :pg.get_members(__MODULE__), do: send(pid, {:to_client, pkg})
   end
 
   defmodule State do
@@ -39,7 +39,7 @@ defmodule Web.Handlers.Websocket do
   @impl(:cowboy_websocket)
   def websocket_init(state) do
     LoggerUtils.info("Websocket_init")
-    Pg2.join(__MODULE__)
+    :pg.join(__MODULE__, self())
     {:ok, ~M{state| timer_ref: Process.send_after(self(), :send_ping, 10_000)}}
   end
 
