@@ -4,7 +4,7 @@ defmodule Web.Resolver do
   """
 
   import ShorterMaps
-  use LoggerUtils
+  use QolUp.LoggerUtils
 
   @spec systems(map(), %Absinthe.Resolution{}) :: {:ok, list(map())}
   @doc """
@@ -18,11 +18,13 @@ defmodule Web.Resolver do
   - {:error, reason} Failed for reason
   """
   def systems(args, resolution)
+
   def systems(~M{name: nil} = _args, _resolution) do
     {:ok, systems} = Config.Manager.get_systems()
-    result = Enum.map(systems, &(Utils.Map.atom_keys(&1)))
+    result = Enum.map(systems, &Utils.Map.atom_keys(&1))
     {:ok, result}
   end
+
   def systems(~M{name} = _args, _resolution) do
     case Config.Manager.get_systems() do
       {:ok, systems} ->
@@ -30,13 +32,17 @@ defmodule Web.Resolver do
           systems
           |> Enum.filter(&(name == &1["name"]))
           |> Enum.map(&{Utils.Map.atom_keys(&1)})
+
         {:ok, result}
-      err -> err
+
+      err ->
+        err
     end
   end
+
   def systems(_args, resolution), do: systems(%{name: nil}, resolution)
 
-  @spec discovered_zones(map(), %Absinthe.Resolution{}) :: {:ok, list(String.t)}
+  @spec discovered_zones(map(), %Absinthe.Resolution{}) :: {:ok, list(String.t())}
   @doc """
   Resolver for discovered zones (discovered because installer mode is true)
   ## Parameters
@@ -50,7 +56,9 @@ defmodule Web.Resolver do
   def discovered_zones(_args, _resolution) do
     if Installer.Sup.installer_mode?() do
       # Installer mode, check system builder for zones
-      {:ok, Installer.SystemBuilder.Manager.get_zones() |> then(fn({:ok, zone_map_set}) -> zone_map_set end)}
+      {:ok,
+       Installer.SystemBuilder.Manager.get_zones()
+       |> then(fn {:ok, zone_map_set} -> zone_map_set end)}
     else
       # Not installer mode, no discovered zones
       {:ok, []}
@@ -66,10 +74,11 @@ defmodule Web.Resolver do
   - {:error, reason} Failed for reason
   """
   def sensors(system, _args, _resolution) do
+    # already atom keyed since systems/2 does that for us
     sensors =
-      system # already atom keyed since systems/2 does that for us
+      system
       |> Map.get(:sensors)
-      |> Enum.map(&(Utils.Map.atom_keys(&1)))
+      |> Enum.map(&Utils.Map.atom_keys(&1))
 
     {:ok, sensors}
   end
@@ -86,7 +95,7 @@ defmodule Web.Resolver do
     zones =
       sensor
       |> Map.get(:zones)
-      |> Enum.map(&(Utils.Map.atom_keys(&1)))
+      |> Enum.map(&Utils.Map.atom_keys(&1))
 
     {:ok, zones}
   end

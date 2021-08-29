@@ -6,18 +6,21 @@ defmodule Sensor.Honeywell345.Worker do
 
   import ShorterMaps
   use GenServer
-  use LoggerUtils
+  use QolUp.LoggerUtils
 
   ##############################
   # API
   ##############################
-  def start_link({system_name, sensor}), do: GenServer.start_link(__MODULE__, {system_name, sensor})
+  def start_link({system_name, sensor}),
+    do: GenServer.start_link(__MODULE__, {system_name, sensor})
 
   defmodule State do
     @moduledoc false
     defstruct [
-      system_name: nil, # system name
-      sensor: nil, # sensor
+      # system name
+      system_name: nil,
+      # sensor
+      sensor: nil
     ]
   end
 
@@ -27,7 +30,7 @@ defmodule Sensor.Honeywell345.Worker do
 
   @impl GenServer
   def init({system_name, sensor}) do
-    LoggerUtils.info("Starting #{inspect(~M{system_name, sensor}, pretty: true)}")
+    QolUp.LoggerUtils.info("Starting #{inspect(~M{system_name, sensor}, pretty: true)}")
     # command line "rtl_433 -f 344940000 -F json -R 70"
     # The "-R 70" can *vary* from version to version of the rtl_433 program!
     {:ok, ~M{%State system_name, sensor}}

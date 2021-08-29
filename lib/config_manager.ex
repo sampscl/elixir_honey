@@ -3,7 +3,7 @@ defmodule Config.Manager do
   Genserver for managing the system configuration. Must be started first!
   """
   use GenServer
-  use LoggerUtils
+  use QolUp.LoggerUtils
   import ShorterMaps
 
   ##############################
@@ -11,9 +11,9 @@ defmodule Config.Manager do
   ##############################
 
   @known_radio_types ~w(rtl-sdr)
-  #@known_sensor_types ~w(honeywell_345)
+  # @known_sensor_types ~w(honeywell_345)
 
-  def start_link(:ok) , do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
+  def start_link(:ok), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
   @doc """
   Get a name-keyed map of configured systems
@@ -33,7 +33,8 @@ defmodule Config.Manager do
   - :ok All is well, the radio was defined or updated
   - {:error, reason} Failed for some reason
   """
-  def define_radio(name, type, index), do: GenServer.call(__MODULE__, {:define_radio, name, type, index})
+  def define_radio(name, type, index),
+    do: GenServer.call(__MODULE__, {:define_radio, name, type, index})
 
   @doc """
   Get a list of all radios
@@ -46,48 +47,66 @@ defmodule Config.Manager do
   defmodule Radio do
     @moduledoc "How a radio is defined"
     defstruct [
-      name: nil, # pretty name for the radio
-      type: nil, # type, must be in @known_radio_types
-      index: nil, # radio index to differentiata multiples of same type
+      # pretty name for the radio
+      name: nil,
+      # type, must be in @known_radio_types
+      type: nil,
+      # radio index to differentiata multiples of same type
+      index: nil
     ]
+
     @type t :: %__MODULE__{}
   end
 
   defmodule Zone do
     @moduledoc "How a zone is defined"
     defstruct [
-      id: 0, # zone id
-      name: "", # human friendly name
-      type: "", # the type of this zone ~w(reed)
-      perimeter: false, # whether zone is on the secure perimeter
+      # zone id
+      id: 0,
+      # human friendly name
+      name: "",
+      # the type of this zone ~w(reed)
+      type: "",
+      # whether zone is on the secure perimeter
+      perimeter: false
     ]
+
     @type t :: %__MODULE__{}
   end
 
   defmodule Sensor do
     @moduledoc "How a sensor is defined"
     defstruct [
-      type: "", # sensor type
-      source: %Radio{}, # the radio that will receive reports from this sensor
-      zones: [], # %Zone{}
+      # sensor type
+      type: "",
+      # the radio that will receive reports from this sensor
+      source: %Radio{},
+      # %Zone{}
+      zones: []
     ]
+
     @type t :: %__MODULE__{}
   end
 
   defmodule System do
     @moduledoc "How a system is defined"
     defstruct [
-      name: "", # THe system name; unique
-      sensors: [], # sensors in the system; each sensor belongs to 1 system
+      # THe system name; unique
+      name: "",
+      # sensors in the system; each sensor belongs to 1 system
+      sensors: []
     ]
+
     @type t :: %__MODULE__{}
   end
 
   defmodule State do
     @moduledoc false
     defstruct [
-      systems: %{}, # k: system name string, v: Systen.t
-      radios: %{}, # k: {type, index}, v: %Radio{}
+      # k: system name string, v: Systen.t
+      systems: %{},
+      # k: {type, index}, v: %Radio{}
+      radios: %{}
     ]
   end
 
@@ -97,24 +116,28 @@ defmodule Config.Manager do
 
   @impl GenServer
   def init(:ok) do
-    LoggerUtils.info("Starting")
+    QolUp.LoggerUtils.info("Starting")
 
     state = update_state_from_cfg(%State{}, read_example_config())
 
-    LoggerUtils.debug(inspect(~M{state}, pretty: true))
+    QolUp.LoggerUtils.debug(inspect(~M{state}, pretty: true))
 
     # publish all the stuff from config
     state
     |> Map.get(:systems)
-    |> Enum.reduce([], fn({_name, system}, radio_list) ->
+    |> Enum.reduce([], fn {_name, system}, radio_list ->
       PubSub.pub_system_configured(~M{%PubSub.SystemConfigured system})
-      Enum.reduce(system.sensors, nil, fn(sensor, _) ->
-        Enum.each(sensor.zones, fn(zone) -> PubSub.pub_zone_discovery(~M{%PubSub.ZoneDiscovery zone}) end)
-        [sensor.source| radio_list]
+
+      Enum.reduce(system.sensors, nil, fn sensor, _ ->
+        Enum.each(sensor.zones, fn zone ->
+          PubSub.pub_zone_discovery(~M{%PubSub.ZoneDiscovery zone})
+        end)
+
+        [sensor.source | radio_list]
       end)
     end)
     |> Enum.uniq()
-    |> Enum.each(fn(radio) ->
+    |> Enum.each(fn radio ->
       PubSub.pub_radio_discovery(~M{%PubSub.RadioDiscovery radio})
     end)
 
@@ -143,7 +166,8 @@ defmodule Config.Manager do
   ##############################
 
   def read_example_config do
-    result = :elixir_honey
+    result =
+      :elixir_honey
       |> :code.priv_dir()
       |> Path.join("samples")
       |> Path.join("config.yml")
@@ -154,14 +178,19 @@ defmodule Config.Manager do
         cfg
 
       {:error, reason} ->
-        LoggerUtils.error("Failed to parse config: #{inspect(reason, pretty: true, limit: :infinity)}")
+        QolUp.LoggerUtils.error(
+          "Failed to parse config: #{inspect(reason, pretty: true, limit: :infinity)}"
+        )
+
         nil
     end
   end
 
-  def do_define_radio(~M{radios} = state, name, type, index) when is_number(index) and type in @known_radio_types do
+  def do_define_radio(~M{radios} = state, name, type, index)
+      when is_number(index) and type in @known_radio_types do
     key = {type, index}
     radio = Map.get(radios, key, ~M{%Radio name: nil})
+
     case {radio.name, name} do
       {nil, nil} ->
         # no new data
@@ -178,27 +207,31 @@ defmodule Config.Manager do
         {~M{state| radios: Map.put(radios, key, radio_to_store)}, :ok}
     end
   end
+
   def do_define_radio(state, _name, _type, _index), do: {state, {:error, "invalid index or type"}}
 
   def update_state_from_cfg(state, cfg) do
     # cfg is string-keyed from the original yaml
     cfg
     |> Map.get("systems")
-    |> Enum.reduce(state, fn(system, current_state) ->
+    |> Enum.reduce(state, fn system, current_state ->
       name = Map.get(system, "name")
+
       sensors =
         system
         |> Map.get("sensors")
-        |> Enum.reduce([], fn(~m{type, source} = sensor, sensor_list) ->
+        |> Enum.reduce([], fn ~m{type, source} = sensor, sensor_list ->
           zones =
             sensor
             |> Map.get("zones")
-            |> Enum.reduce([], fn(~m{id, name, type, perimeter} = _zone, zone_list) ->
-              [~M{%Zone id, name, type, perimeter}| zone_list]
+            |> Enum.reduce([], fn ~m{id, name, type, perimeter} = _zone, zone_list ->
+              [~M{%Zone id, name, type, perimeter} | zone_list]
             end)
+
           radio = ~M{%Radio name: source["name"], type: source["type"],  index: source["index"]}
-          [~M{%Sensor type, source: radio, zones} |sensor_list]
+          [~M{%Sensor type, source: radio, zones} | sensor_list]
         end)
+
       system = ~M{%System name, sensors}
       ~M{current_state| systems: Map.put(current_state.systems, name, system)}
     end)

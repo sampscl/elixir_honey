@@ -1,14 +1,14 @@
 defmodule Web.Handlers.Root do
   @moduledoc false
   use Plug.Router
-  alias Utils.Mime
+  alias QolUp.Mime
 
-  if Mix.env == :dev do
-    plug Plug.Logger
+  if Mix.env() == :dev do
+    plug(Plug.Logger)
   end
 
-  plug :match
-  plug :dispatch
+  plug(:match)
+  plug(:dispatch)
 
   get "/" do
     conn
@@ -17,11 +17,10 @@ defmodule Web.Handlers.Root do
   end
 
   match _ do
-    IO.puts("*** ERROR ***: trying to access path #{inspect conn.request_path}")
+    IO.puts("*** ERROR ***: trying to access path #{inspect(conn.request_path)}")
 
     conn
     |> put_resp_content_type(Mime.plain_text())
     |> send_resp(404, "")
   end
-
 end

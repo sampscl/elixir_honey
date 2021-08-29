@@ -4,7 +4,7 @@ defmodule Installer.SystemBuilder.Manager do
   """
   import ShorterMaps
   use GenServer
-  use LoggerUtils
+  use QolUp.LoggerUtils
 
   ##############################
   # API
@@ -34,7 +34,8 @@ defmodule Installer.SystemBuilder.Manager do
   ## Returns
   - `:ok` All is well
   """
-  def update_configuration(system_name), do: GenServer.call(__MODULE__, {:update_configuration, system_name})
+  def update_configuration(system_name),
+    do: GenServer.call(__MODULE__, {:update_configuration, system_name})
 
   @doc """
   Remove a zone by id
@@ -48,7 +49,8 @@ defmodule Installer.SystemBuilder.Manager do
   defmodule State do
     @moduledoc false
     defstruct [
-      zones: MapSet.new(), # k: zone_index
+      # k: zone_index
+      zones: MapSet.new()
     ]
   end
 
@@ -58,7 +60,7 @@ defmodule Installer.SystemBuilder.Manager do
 
   @impl GenServer
   def init(:ok) do
-    LoggerUtils.info("Starting")
+    QolUp.LoggerUtils.info("Starting")
     PubSub.sub_zone_discovery()
     {:ok, ~M{%State}}
   end
@@ -99,7 +101,7 @@ defmodule Installer.SystemBuilder.Manager do
 
   def do_update_configuration(state, system_name) do
     # TODO: implement do_update_configuration/2
-    LoggerUtils.info("Updating configuration for #{system_name}")
+    QolUp.LoggerUtils.info("Updating configuration for #{system_name}")
     {state, :ok}
   end
 end

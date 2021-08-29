@@ -5,7 +5,7 @@ defmodule Installer.RtlSdr.Worker do
 
   import ShorterMaps
   use GenServer
-  use LoggerUtils
+  use QolUp.LoggerUtils
 
   ##############################
   # API
@@ -22,8 +22,7 @@ defmodule Installer.RtlSdr.Worker do
 
   defmodule State do
     @moduledoc false
-    defstruct [
-    ]
+    defstruct []
   end
 
   ##############################
@@ -32,7 +31,7 @@ defmodule Installer.RtlSdr.Worker do
 
   @impl GenServer
   def init(:ok) do
-    LoggerUtils.info("Starting")
+    QolUp.LoggerUtils.info("Starting")
     {:ok, do_detect(~M{%State})}
   end
 
@@ -53,17 +52,19 @@ defmodule Installer.RtlSdr.Worker do
           result
           |> String.graphemes()
           |> Enum.reduce(0, fn
-            ("\n", ndx) ->
-              LoggerUtils.info("Defining rtl-sdr index #{ndx}")
+            "\n", ndx ->
+              QolUp.LoggerUtils.info("Defining rtl-sdr index #{ndx}")
               Config.Manager.define_radio("rtl-sdr_#{ndx + 1}", "rtl-sdr", ndx)
               ndx + 1
 
-            (_, ndx) ->
+            _, ndx ->
               ndx
           end)
+
       err ->
-        LoggerUtils.error("Failed to run lsusb, error #{inspect(err, pretty: true)}")
+        QolUp.LoggerUtils.error("Failed to run lsusb, error #{inspect(err, pretty: true)}")
     end
+
     state
   end
 end

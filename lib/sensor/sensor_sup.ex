@@ -6,13 +6,13 @@ defmodule Sensor.Sup do
 
   import ShorterMaps
   use Supervisor
-  use LoggerUtils
+  use QolUp.LoggerUtils
 
   def start_link(:ok), do: Supervisor.start_link(__MODULE__, :ok, name: __MODULE__)
 
   @impl Supervisor
   def init(:ok) do
-    LoggerUtils.info("Starting")
+    QolUp.LoggerUtils.info("Starting")
     children = configured_children()
     Supervisor.init(children, strategy: :one_for_one)
   end
@@ -20,14 +20,14 @@ defmodule Sensor.Sup do
   def configured_children do
     case Config.Manager.get_systems() do
       {:ok, systems} ->
-        Enum.reduce(systems, [], fn({name, system} = _system_item, child_list) ->
-          Enum.reduce(system.sensors, nil, fn(sensor, _) ->
-            [sensor_child_spec(name, sensor)| child_list]
+        Enum.reduce(systems, [], fn {name, system} = _system_item, child_list ->
+          Enum.reduce(system.sensors, nil, fn sensor, _ ->
+            [sensor_child_spec(name, sensor) | child_list]
           end)
         end)
 
       {:error, reason} ->
-        LoggerUtils.error("No systems configured, error: #{inspect(reason)}")
+        QolUp.LoggerUtils.error("No systems configured, error: #{inspect(reason)}")
         []
     end
   end
@@ -37,5 +37,4 @@ defmodule Sensor.Sup do
       "honeywell_345" -> {Sensor.Honeywell345.Worker, {system_name, sensor}}
     end
   end
-
 end

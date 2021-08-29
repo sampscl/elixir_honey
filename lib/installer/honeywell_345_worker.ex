@@ -6,7 +6,7 @@ defmodule Installer.Honeywell345.Worker do
 
   import ShorterMaps
   use GenServer
-  use LoggerUtils
+  use QolUp.LoggerUtils
 
   ##############################
   # API
@@ -31,9 +31,12 @@ defmodule Installer.Honeywell345.Worker do
   defmodule State do
     @moduledoc false
     defstruct [
-      radio: nil, # Config.Manager.Radio.t that is currently being used to scan
-      pid: nil, # pid of subprocess
-      stdin_lb: LineBuffer.new(), # line buffer for stdin
+      # Config.Manager.Radio.t that is currently being used to scan
+      radio: nil,
+      # pid of subprocess
+      pid: nil,
+      # line buffer for stdin
+      stdin_lb: LineBuffer.new()
     ]
   end
 
@@ -43,7 +46,7 @@ defmodule Installer.Honeywell345.Worker do
 
   @impl GenServer
   def init(:ok) do
-    LoggerUtils.info("Starting")
+    QolUp.LoggerUtils.info("Starting")
     {:ok, ~M{%State}}
   end
 
@@ -71,7 +74,8 @@ defmodule Installer.Honeywell345.Worker do
 
   @impl GenServer
   def handle_info({dead_pid, :result, result}, ~M{pid} = state) do
-    LoggerUtils.info("Pid #{inspect(dead_pid)} exited: #{inspect(result, pretty: true)}")
+    QolUp.LoggerUtils.info("Pid #{inspect(dead_pid)} exited: #{inspect(result, pretty: true)}")
+
     if dead_pid == pid do
       # pid we're tracking pid died, nil it out
       {:noreply, ~M{state| pid: nil}}
@@ -86,31 +90,36 @@ defmodule Installer.Honeywell345.Worker do
   ##############################
 
   def do_radio_scan(~M{pid: nil} = state, radio) do
-    {:ok, pid} = Executus.execute("rtl_433 -d #{radio.index} -f 344940000 -F json -R 70", sync: false)
+    {:ok, pid} =
+      Executus.execute("rtl_433 -d #{radio.index} -f 344940000 -F json -R 70", sync: false)
+
     stdin_lb = LineBuffer.new()
     {~M{state| pid, stdin_lb, radio}, :ok}
   end
+
   def do_radio_scan(state, _radio), do: {state, {:error, "scan in progress"}}
 
   def do_stop_scan(~M{pid: nil} = state), do: {state, :ok}
+
   def do_stop_scan(~M{pid} = state) do
     Executus.signal(pid, :INT)
     {~M{state| pid: nil}, :ok}
   end
 
   def do_handle_data(~M{stdin_lb} = state, :out, data) do
-    LoggerUtils.debug("rtl_433 reports: #{inspect(data, pretty: true)}")
+    QolUp.LoggerUtils.debug("rtl_433 reports: #{inspect(data, pretty: true)}")
     {updated_stdin_lb, lines} = LineBuffer.add_data(stdin_lb, data)
     process_lines(~M{state| stdin_lb: updated_stdin_lb}, lines)
   end
 
   def do_handle_data(state, :err, data) do
-    LoggerUtils.debug("rtl_433 is whining: #{inspect(data, pretty: true)}")
+    QolUp.LoggerUtils.debug("rtl_433 is whining: #{inspect(data, pretty: true)}")
     state
   end
 
   def process_lines(state, []), do: state
-  def process_lines(state, [line| rest]) do
+
+  def process_lines(state, [line | rest]) do
     zone_def = Utils.Json.decode!(line)
     id = zone_def["id"]
     name = zone_def["name"]
@@ -118,7 +127,7 @@ defmodule Installer.Honeywell345.Worker do
     perimeter = zone_def["perimeter"]
 
     zone = ~M{%Config.Manager.Zone id, name, type, perimeter}
-    LoggerUtils.info("zone discovery: #{inspect(~M{zone}, pretty: true)}")
+    QolUp.LoggerUtils.info("zone discovery: #{inspect(~M{zone}, pretty: true)}")
     PubSub.pub_zone_discovery(~M{%PubSub.ZoneDiscovery zone})
 
     process_lines(state, rest)

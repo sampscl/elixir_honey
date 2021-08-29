@@ -6,7 +6,7 @@ defmodule Web.Websocket.Worker do
   Manage pub sub publishing to websockets
   """
   use GenServer
-  use LoggerUtils
+  use QolUp.LoggerUtils
   import ShorterMaps
 
   ##############################
@@ -14,13 +14,12 @@ defmodule Web.Websocket.Worker do
   ##############################
 
   def start_link(:ok) do
-    GenServer.start_link(__MODULE__, [:ok], [name: __MODULE__])
+    GenServer.start_link(__MODULE__, [:ok], name: __MODULE__)
   end
 
   defmodule State do
     @moduledoc false
-    defstruct [
-    ]
+    defstruct []
   end
 
   ##############################
@@ -28,14 +27,14 @@ defmodule Web.Websocket.Worker do
   ##############################
 
   def init([:ok]) do
-    LoggerUtils.info("starting")
+    QolUp.LoggerUtils.info("starting")
     PubSub.sub_radio_discovery()
     PubSub.sub_zone_discovery()
     {:ok, %State{}}
   end
 
   def handle_info(~M{%Flub.Message data, channel}, state) do
-    LoggerUtils.debug(inspect(~M{channel, data}, pretty: true))
+    QolUp.LoggerUtils.debug(inspect(~M{channel, data}, pretty: true))
     Web.Handlers.Websocket.send_msg_to_all(channel, data)
     {:noreply, state}
   end
@@ -43,5 +42,4 @@ defmodule Web.Websocket.Worker do
   ##############################
   # Internal Calls
   ##############################
-
 end
