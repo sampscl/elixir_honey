@@ -26,3 +26,4 @@ elixir_honey-*.tar
 /tmp
 
 *.code-workspace
+.elixir_ls

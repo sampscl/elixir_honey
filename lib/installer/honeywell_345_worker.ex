@@ -110,15 +110,16 @@ defmodule Installer.Honeywell345.Worker do
   end
 
   def process_lines(state, []), do: state
-  def process_lines(~M{radio} = state, [line| rest]) do
-    id =
-      line
-      |> Utils.Json.decode!()
-      |> Map.get("id")
+  def process_lines(state, [line| rest]) do
+    zone_def = Utils.Json.decode!(line)
+    id = zone_def["id"]
+    name = zone_def["name"]
+    type = zone_def["type"]
+    perimeter = zone_def["perimeter"]
 
-    LoggerUtils.info("zone discovery: #{inspect(~M{id, radio}, pretty: true)}")
-
-    PubSub.pub_zone_discovery(~M{%PubSub.ZoneDiscovery radio, id})
+    zone = ~M{%Config.Manager.Zone id, name, type, perimeter}
+    LoggerUtils.info("zone discovery: #{inspect(~M{zone}, pretty: true)}")
+    PubSub.pub_zone_discovery(~M{%PubSub.ZoneDiscovery zone})
 
     process_lines(state, rest)
   end

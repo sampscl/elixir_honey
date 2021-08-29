@@ -89,8 +89,8 @@ defmodule Installer.SystemBuilder.Manager do
   # Internal Calls
   ##############################
 
-  def do_zone_discovery(~M{zones} = state, ~M{%PubSub.ZoneDiscovery id}) do
-    ~M{state| zones: MapSet.put(zones, id)}
+  def do_zone_discovery(~M{zones} = state, ~M{%PubSub.ZoneDiscovery zone}) do
+    ~M{state| zones: MapSet.put(zones, zone.id)}
   end
 
   def do_remove_zone(~M{zones} = state, id) do

@@ -103,16 +103,18 @@ defmodule Config.Manager do
 
     LoggerUtils.debug(inspect(~M{state}, pretty: true))
 
+    # publish all the stuff from config
     state
     |> Map.get(:systems)
-    |> Enum.reduce([], fn({_name, system}, radio_list) -> 
+    |> Enum.reduce([], fn({_name, system}, radio_list) ->
       PubSub.pub_system_configured(~M{%PubSub.SystemConfigured system})
-      Enum.reduce(system.sensors, nil, fn(sensor, _) -> 
-        [sensor.source| radio_list] 
+      Enum.reduce(system.sensors, nil, fn(sensor, _) ->
+        Enum.each(sensor.zones, fn(zone) -> PubSub.pub_zone_discovery(~M{%PubSub.ZoneDiscovery zone}) end)
+        [sensor.source| radio_list]
       end)
     end)
     |> Enum.uniq()
-    |> Enum.each(fn(radio) -> 
+    |> Enum.each(fn(radio) ->
       PubSub.pub_radio_discovery(~M{%PubSub.RadioDiscovery radio})
     end)
 
@@ -202,4 +204,3 @@ defmodule Config.Manager do
     end)
   end
 end
-
