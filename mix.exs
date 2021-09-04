@@ -70,7 +70,7 @@ defmodule ElixirHoney.MixProject do
       {:absinthe_plug, "~> 1.5"},
       {:flub, git: "https://github.com/sampscl/flub.git", branch: "master"},
       {:line_buffer, "~> 1.0"},
-      {:qol_up, "~>1.0"}
+      {:qol_up, "~>1.1"}
     ]
   end
 end
