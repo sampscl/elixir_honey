@@ -16,9 +16,9 @@ defmodule Utils.Map do
   def atom_keys(string_keyed) when is_map(string_keyed) do
     for {k, v} <- string_keyed, into: %{} do
       case {is_binary(k), is_map(v)} do
-        {true, true}   -> {String.to_atom(k), atom_keys(v)}
-        {true, false}  -> {String.to_atom(k), v}
-        {false, true}  -> {k, atom_keys(v)}
+        {true, true} -> {String.to_atom(k), atom_keys(v)}
+        {true, false} -> {String.to_atom(k), v}
+        {false, true} -> {k, atom_keys(v)}
         {false, false} -> {k, v}
       end
     end
